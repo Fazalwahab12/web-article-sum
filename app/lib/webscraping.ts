@@ -43,10 +43,8 @@ const WEBSITE_CONFIGS = [
   },
 ];
 
-// Helper function to delay execution
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Helper function to make API request with retries
 async function makeRequestWithRetry(
   url: string,
   siteName: string,
@@ -55,7 +53,7 @@ async function makeRequestWithRetry(
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await axios.get(url, {
-        timeout: 60000, // 60 second timeout
+        timeout: 60000,
         headers: {
           "Accept-Encoding": "gzip,deflate,compress",
         },
@@ -71,7 +69,6 @@ async function makeRequestWithRetry(
         throw error;
       }
 
-      // Calculate exponential backoff delay: 2^attempt * 1000ms + random delay
       const backoffDelay = Math.min(
         1000 * Math.pow(2, attempt) + Math.random() * 1000,
         10000
@@ -94,10 +91,10 @@ export async function fetchLatestArticles() {
       }&url=${encodeURIComponent(
         site.url
       )}&fields[latest_title]=Get only the most recent article post title&fields[latest_link]=URL of the most recent article&fields[latest_date]=Publication date of the most recent article&fields[latest_author]=Author name of the article&fields[latest_summary]=Generate a detailed summary under 300 words of the most recent article's main points excluding author information&fields[latest_discussion_points]=Summarize the steps and tips and discuss the key points of this article`;
+
       console.log(`Starting fetch for ${site.name}...`);
       const data = await makeRequestWithRetry(url, site.name);
 
-      // Handle discussion points if they're in a list/array format
       let formattedDiscussionPoints = "";
       if (data.latest_discussion_points) {
         if (Array.isArray(data.latest_discussion_points.values)) {
@@ -124,15 +121,12 @@ export async function fetchLatestArticles() {
       });
 
       console.log(`Successfully fetched data from: ${site.name}`);
-
-      // Add a small delay between requests to avoid overwhelming the API
       await delay(2000);
     } catch (error: any) {
       console.error(
         `Failed to fetch from ${site.name} after all retries:`,
         error.message
       );
-      // Continue with other sites even if one fails
     }
   }
 

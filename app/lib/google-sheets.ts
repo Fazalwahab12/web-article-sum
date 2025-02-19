@@ -26,7 +26,12 @@ export async function getGoogleSheets() {
       ],
     });
 
-    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID?.trim(), jwt);
+    const sheetId = process.env.GOOGLE_SHEET_ID?.trim();
+    if (!sheetId) {
+      throw new Error("Google Sheet ID is missing");
+    }
+
+    const doc = new GoogleSpreadsheet(sheetId, jwt);
 
     // Add error handling for loadInfo
     try {

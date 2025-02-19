@@ -1,11 +1,15 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Article } from "./types/article";
 
-export default function Home() {
+export default function Page() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedArticles, setExpandedArticles] = useState<{
+    [key: number]: boolean;
+  }>({});
 
   useEffect(() => {
     async function fetchArticles() {
@@ -25,46 +29,121 @@ export default function Home() {
     fetchArticles();
   }, []);
 
-  return (
-    <main className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">
-        Latest Articles from Multiple Sources
-      </h1>
+  const toggleExpanded = (index: number) => {
+    setExpandedArticles((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
 
-      {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-              <div className="h-32 bg-gray-200 rounded mb-4"></div>
-            </div>
-          ))}
-        </div>
-      ) : articles.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {articles.map((article, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-md p-6">
-              <div className="text-sm text-gray-500 mb-2">{article.source}</div>
-              <h2 className="text-xl font-semibold mb-2">{article.title}</h2>
-              <div className="text-sm text-gray-600 mb-2">
-                By {article.author} • {article.date}
-              </div>
-              <a
-                href={article.link}
-                className="text-blue-600 hover:underline mb-4 block"
-                target="_blank"
-                rel="noopener noreferrer"
+  return (
+    <main className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <header className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            Latest Industry Insights
+          </h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Stay updated with the latest articles from leading industry sources
+          </p>
+        </header>
+
+        {loading ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader className="space-y-3">
+                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="h-24 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : articles.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {articles.map((article, index) => (
+              <Card
+                key={index}
+                className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
               >
-                Read full article
-              </a>
-              <p className="text-gray-800 leading-relaxed">{article.summary}</p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-red-600">Failed to load articles</p>
-      )}
+                <CardHeader className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
+                      {article.source}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {article.date}
+                    </span>
+                  </div>
+                  <CardTitle className="text-xl font-bold leading-tight">
+                    {article.title}
+                  </CardTitle>
+                  <div className="text-sm text-gray-600">
+                    By {article.author}
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  <div className="prose">
+                    <p className="text-gray-700 leading-relaxed">
+                      {article.summary}
+                    </p>
+                  </div>
+
+                  {article.discussionPoints && (
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => toggleExpanded(index)}
+                        className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        <span className="font-medium">Discussion Points</span>
+                        {expandedArticles[index] ? (
+                          <ChevronUp size={20} />
+                        ) : (
+                          <ChevronDown size={20} />
+                        )}
+                      </button>
+
+                      {expandedArticles[index] && (
+                        <div className="pl-4 border-l-2 border-blue-200 mt-2 space-y-2">
+                          {article.discussionPoints
+                            .split("\n")
+                            .map((point, pointIndex) => (
+                              <p key={pointIndex} className="text-gray-700">
+                                • {point.trim()}
+                              </p>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <a
+                    href={article.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    <span>Read full article</span>
+                    <ExternalLink size={16} />
+                  </a>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-red-600 text-lg">
+              Unable to load articles. Please try again later.
+            </p>
+          </div>
+        )}
+      </div>
     </main>
   );
 }

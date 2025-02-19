@@ -93,8 +93,7 @@ export async function fetchLatestArticles() {
         process.env.WEBSCRAPING_API_KEY
       }&url=${encodeURIComponent(
         site.url
-      )}&fields[latest_title]=Get only the most recent article post title&fields[latest_link]=URL of the most recent article&fields[latest_date]=Publication date of the most recent article&fields[latest_author]=Author name of the article&fields[latest_summary]=Generate a detailed summary under 300 words of the most recent article's main points excluding author information&fields[latest_discussion_points]=Extract 5-8 key discussion points from the article`;
-
+      )}&fields[latest_title]=Get only the most recent article post title&fields[latest_link]=URL of the most recent article&fields[latest_date]=Publication date of the most recent article&fields[latest_author]=Author name of the article&fields[latest_summary]=Generate a detailed summary under 300 words of the most recent article's main points excluding author information&fields[latest_discussion_points]=Summarize the steps and tips and discuss the key points of this article`;
       console.log(`Starting fetch for ${site.name}...`);
       const data = await makeRequestWithRetry(url, site.name);
 

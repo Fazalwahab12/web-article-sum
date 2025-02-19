@@ -5,4 +5,5 @@ export interface Article {
   summary: string;
   author: string;
   source: string;
+  discussionPoints: string;
 }

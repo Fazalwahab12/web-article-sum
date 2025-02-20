@@ -1,39 +1,45 @@
 "use client";
-import { useState, useEffect } from "react";
+import { Key, useEffect, useState } from "react";
+import axios from "axios";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Article } from "./types/article";
 
-export default function Page() {
-  const [articles, setArticles] = useState<Article[]>([]);
+export default function ArticlesPage() {
+  const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedArticles, setExpandedArticles] = useState<{
-    [key: number]: boolean;
-  }>({});
+  const [expandedArticles, setExpandedArticles] = useState<
+    Record<string | number, boolean>
+  >({});
 
   useEffect(() => {
-    async function fetchArticles() {
-      try {
-        const response = await fetch("/api/update-articles");
-        const data = await response.json();
-        if (data.success) {
-          setArticles(data.articles);
-        }
-      } catch (error) {
-        console.error("Error fetching articles:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchArticles();
   }, []);
 
-  const toggleExpanded = (index: number) => {
+  const fetchArticles = async () => {
+    try {
+      const response = await axios.get("/api/articles");
+      setArticles(response.data.articles);
+    } catch (error) {
+      console.error("Failed to fetch articles:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleExpanded = (id: string | number) => {
     setExpandedArticles((prev) => ({
       ...prev,
-      [index]: !prev[index],
+      [id]: !prev[id],
     }));
+  };
+
+  const formatDate = (dateString: string | number | Date) => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    };
+    return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   return (
@@ -66,18 +72,18 @@ export default function Page() {
           </div>
         ) : articles.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {articles.map((article, index) => (
+            {articles.map((article) => (
               <Card
-                key={index}
+                key={article._id}
                 className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
               >
                 <CardHeader className="space-y-2">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-between">
                     <span className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
                       {article.source}
                     </span>
                     <span className="text-sm text-gray-500">
-                      {article.date}
+                      {formatDate(article.date)}
                     </span>
                   </div>
                   <CardTitle className="text-xl font-bold leading-tight">
@@ -89,35 +95,38 @@ export default function Page() {
                 </CardHeader>
 
                 <CardContent className="space-y-4">
-                  <div className="prose">
-                    <p className="text-gray-700 leading-relaxed">
-                      {article.summary}
-                    </p>
-                  </div>
+                  <p className="text-gray-700 leading-relaxed">
+                    {article.summary}
+                  </p>
 
                   {article.discussionPoints && (
                     <div className="space-y-2">
                       <button
-                        onClick={() => toggleExpanded(index)}
+                        onClick={() => toggleExpanded(article._id)}
                         className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
                       >
                         <span className="font-medium">Discussion Points</span>
-                        {expandedArticles[index] ? (
+                        {expandedArticles[article._id] ? (
                           <ChevronUp size={20} />
                         ) : (
                           <ChevronDown size={20} />
                         )}
                       </button>
 
-                      {expandedArticles[index] && (
+                      {expandedArticles[article._id] && (
                         <div className="pl-4 border-l-2 border-blue-200 mt-2 space-y-2">
                           {article.discussionPoints
                             .split("\n")
-                            .map((point, pointIndex) => (
-                              <p key={pointIndex} className="text-gray-700">
-                                • {point.trim()}
-                              </p>
-                            ))}
+                            .map(
+                              (
+                                point: string,
+                                index: Key | null | undefined
+                              ) => (
+                                <p key={index} className="text-gray-700">
+                                  • {point.trim()}
+                                </p>
+                              )
+                            )}
                         </div>
                       )}
                     </div>

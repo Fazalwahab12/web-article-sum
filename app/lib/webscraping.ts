@@ -24,9 +24,7 @@ async function makeRequestWithRetry(
         error.message
       );
 
-      if (attempt === maxRetries) {
-        throw error;
-      }
+      if (attempt === maxRetries) throw error;
 
       const backoffDelay = Math.min(
         1000 * Math.pow(2, attempt) + Math.random() * 1000,
@@ -42,21 +40,17 @@ async function makeRequestWithRetry(
 
 function formatDiscussionPoints(data: any): string {
   if (!data.latest_discussion_points) return "";
-
-  if (Array.isArray(data.latest_discussion_points.values)) {
+  if (Array.isArray(data.latest_discussion_points?.values)) {
     return data.latest_discussion_points.values
-      .map((value: any) => value.string_value)
+      .map((v: any) => v.string_value)
       .join("\n");
   }
-
   if (Array.isArray(data.latest_discussion_points)) {
     return data.latest_discussion_points.join("\n");
   }
-
   if (typeof data.latest_discussion_points === "string") {
     return data.latest_discussion_points;
   }
-
   return "";
 }
 
@@ -82,14 +76,13 @@ export async function fetchLatestArticles(): Promise<Article[]> {
 
   for (const site of WEBSITE_CONFIGS) {
     try {
-      // First try to get today's article
       console.log(`Checking for today's article from ${site.name}...`);
       let data = await fetchArticleForSite(
         site,
         "only articles published today, return the most recent"
       );
 
-      // If no article found today, get random article from past 30 days
+      // Fallback: Random article from the past 30 days
       if (!data.latest_title || !data.latest_date) {
         console.log(
           `No article found today for ${site.name}, fetching random article from past 30 days...`
@@ -98,14 +91,19 @@ export async function fetchLatestArticles(): Promise<Article[]> {
           site,
           "a random article from the past 30 days"
         );
+      }
 
-        // Skip if no article found or if article is too old
-        if (!data.latest_date || new Date(data.latest_date) < thirtyDaysAgo) {
-          console.log(
-            `No valid article found for ${site.name} within the last 30 days`
-          );
-          continue;
-        }
+      // Fallback: Any available article if 30-day search fails
+      if (!data.latest_title || !data.latest_date) {
+        console.log(
+          `No valid article found for ${site.name} in last 30 days, fetching any available article...`
+        );
+        data = await fetchArticleForSite(site, "any available article");
+      }
+
+      if (!data.latest_title || !data.latest_date) {
+        console.log(`Failed to fetch any article from ${site.name}`);
+        continue; // Skip only if absolutely nothing is available
       }
 
       articles.push({
@@ -121,7 +119,7 @@ export async function fetchLatestArticles(): Promise<Article[]> {
       });
 
       console.log(`Successfully fetched data from: ${site.name}`);
-      await delay(2000); // Respect rate limits
+      await delay(2000); // Rate limit
     } catch (error: any) {
       console.error(
         `Failed to fetch from ${site.name} after all retries:`,

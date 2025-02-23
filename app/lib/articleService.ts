@@ -94,7 +94,7 @@ export async function getArticles() {
     await connectDB();
 
     const tenDaysAgo = new Date();
-    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+    tenDaysAgo.setDate(tenDaysAgo.getDate() - 30);
 
     const articles = await Article.find({
       createdAt: { $gt: tenDaysAgo },
@@ -102,7 +102,7 @@ export async function getArticles() {
       .sort({ createdAt: -1 })
       .lean();
 
-    console.log(`Retrieved ${articles.length} articles from the last 10 days`);
+    console.log(`Retrieved ${articles.length} articles from the last 30 days`);
     return articles;
   } catch (error) {
     console.error("Error retrieving articles:", error);

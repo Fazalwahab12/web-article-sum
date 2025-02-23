@@ -1,8 +1,4 @@
-import { Key } from "readline";
-
 export interface Article {
-  _id: Key | null | undefined;
-  id: string;
   title: string;
   link: string;
   date: string;
@@ -10,5 +6,10 @@ export interface Article {
   summary: string;
   source: string;
   discussionPoints: string;
-  createdAt: Date;
+}
+
+export interface WebsiteConfig {
+  url: string;
+  name: string;
+  baseUrl: string;
 }

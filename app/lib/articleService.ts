@@ -35,7 +35,6 @@ export async function storeArticles(articles: ScrapedArticle[]) {
   try {
     await connectDB();
 
-    // Filter out articles with missing required fields
     const validArticles = articles.filter(
       (article) =>
         article.title && article.link && article.summary && article.source
@@ -45,47 +44,20 @@ export async function storeArticles(articles: ScrapedArticle[]) {
       `Attempting to store ${validArticles.length} valid articles out of ${articles.length} total`
     );
 
-    const results = await Promise.all(
-      validArticles.map(async (article) => {
-        try {
-          // Transform and validate the article data
-          const transformedArticle = validateAndTransformArticle(article);
-
-          // Log the article being processed
-          console.log(
-            `Processing article: "${transformedArticle.title}" from ${transformedArticle.source}`
-          );
-
-          const result = await Article.findOneAndUpdate(
-            {
-              source: transformedArticle.source,
-              title: transformedArticle.title,
-            },
-            transformedArticle,
-            {
-              upsert: true,
-              new: true,
-              runValidators: true,
-            }
-          );
-
-          console.log(`Successfully stored article: ${result.title}`);
-          return result;
-        } catch (err) {
-          console.error(`Error storing article from ${article.source}:`, err);
-          console.error("Article data:", JSON.stringify(article, null, 2));
-          return null;
-        }
-      })
+    const results = await Article.insertMany(
+      validArticles.map(validateAndTransformArticle),
+      { ordered: false } // Continues even if some documents fail
     );
 
-    const savedArticles = results.filter(Boolean);
-    console.log(`Successfully stored ${savedArticles.length} articles`);
-
-    return savedArticles;
-  } catch (error) {
-    console.error("Error storing articles:", error);
-    throw error;
+    console.log(`Successfully stored ${results.length} articles`);
+    return results;
+  } catch (error: any) {
+    if (error.code === 11000) {
+      console.warn("Duplicate entry detected. Continuing...");
+    } else {
+      console.error("Error storing articles:", error);
+      throw error;
+    }
   }
 }
 
@@ -93,16 +65,11 @@ export async function getArticles() {
   try {
     await connectDB();
 
-    const tenDaysAgo = new Date();
-    tenDaysAgo.setDate(tenDaysAgo.getDate() - 30);
-
-    const articles = await Article.find({
-      createdAt: { $gt: tenDaysAgo },
-    })
-      .sort({ createdAt: -1 })
+    const articles = await Article.find({})
+      .sort({ createdAt: -1 }) // Latest articles first
       .lean();
 
-    console.log(`Retrieved ${articles.length} articles from the last 30 days`);
+    console.log(`Retrieved ${articles.length} articles`);
     return articles;
   } catch (error) {
     console.error("Error retrieving articles:", error);

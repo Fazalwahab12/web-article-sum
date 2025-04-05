@@ -54,6 +54,8 @@ export async function storeArticles(articles: ScrapedArticle[]) {
   } catch (error: any) {
     if (error.code === 11000) {
       console.warn("Duplicate entry detected. Continuing...");
+      // Return an empty array in case of duplicates
+      return [];
     } else {
       console.error("Error storing articles:", error);
       throw error;

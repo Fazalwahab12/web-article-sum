@@ -1,0 +1,16 @@
+name: Daily Article Update
+
+on:
+  schedule:
+    - cron: '0 22 * * *'  # Runs at 10 PM UTC
+  workflow_dispatch:       # Allows manual triggering
+
+jobs:
+  update-articles:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Update Articles API
+        run: |
+          curl -X GET ${{ secrets.VERCEL_URL }}/api/update-articles
+        env:
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}

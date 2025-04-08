@@ -4,5 +4,11 @@
       "path": "/api/cron",
       "schedule": "0 22 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "api/update-articles": {
+      "maxDuration": 60
+    }
+  },
+  "version": 2
 }
